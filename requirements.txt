@@ -1,1 +1,5 @@
 fastapi==0.131.0
+redis[hiredis]==5.0.0
+celery==5.3.4
+httpx==0.25.0
+pydantic-settings==2.1.0
