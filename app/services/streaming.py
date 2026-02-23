@@ -20,6 +20,8 @@ class ChatStreaming:
 
         should_use_cache = chat_request.use_cache and await stream_exists(redis, stream_key)
 
+        print(f"ChatStreaming: should_use_cache={should_use_cache}, stream_key={stream_key}")
+
         if not should_use_cache:
             generate_ai_response.delay(chat_request.question, question_hash)
             await asyncio.sleep(0.1)
