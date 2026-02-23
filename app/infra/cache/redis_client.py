@@ -29,7 +29,7 @@ async def read_stream(
 
 
 async def write_to_stream(redis: Redis, stream_key: str, data: dict) -> str:
-    return await redis.xadd(stream_key, {"data": json.dumps(data)})
+    return await redis.xadd(stream_key, {"data": json.dumps(data, ensure_ascii=False)})
 
 
 async def stream_exists(redis: Redis, stream_key: str) -> bool:
