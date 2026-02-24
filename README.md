@@ -1,6 +1,6 @@
 # Chat Streaming API
 
-A FastAPI application that streams AI responses using Redis for caching and Celery for background task processing. Uses GLM 5 model via OpenRouter API.
+A FastAPI application that streams AI responses using Redis for caching and Celery for background task processing. Uses OpenAI SDK for AI model integration.
 
 ## Architecture
 
@@ -25,10 +25,10 @@ A FastAPI application that streams AI responses using Redis for caching and Cele
                     │               ┌────────────────┐      │
                     │               │ Celery Worker  │      │
                     │               │                │      │
-                    │               │ ┌────────────┐ │      │
-                    │               │ │ OpenRouter │ │      │
-                    │               │ │    API     │ │      │
-                    │               │ └─────┬──────┘ │      │
+                     │               │ ┌────────────┐ │      │
+                     │               │ │  OpenAI    │ │      │
+                     │               │ │   SDK      │ │      │
+                     │               │ └─────┬──────┘ │      │
                     │               └───────┼────────┘      │
                     │                       │               │
                     │                       ▼               │
@@ -54,7 +54,7 @@ A FastAPI application that streams AI responses using Redis for caching and Cele
 3. **Cache check**: 
    - If `use_cache=true` and stream exists in Redis → stream cached response
    - Otherwise → trigger Celery task and stream new response
-4. **Celery worker** calls OpenRouter API with streaming enabled
+4. **Celery worker** calls OpenAI API with streaming enabled
 5. **Chunks are written** to Redis stream in real-time
 6. **Client receives** Server-Sent Events (SSE) with status updates:
    - `processing` - Request started
@@ -163,15 +163,13 @@ redis-cli ping
 cp .env.example .env
 ```
 
-Edit `.env` with your OpenRouter API key:
+Edit `.env` with your OpenAI API key:
 ```env
-OPENROUTER_API_KEY=sk-or-your-api-key-here
+OPENAI_API_KEY=sk-your-api-key-here
 REDIS_URL=redis://localhost:6379/0
 CELERY_BROKER_URL=redis://localhost:6379/1
 CACHE_TTL_SECONDS=900
 ```
-
-> Get your API key at https://openrouter.ai
 
 ## Running the Application
 
@@ -249,7 +247,7 @@ curl http://localhost:8000/
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `OPENROUTER_API_KEY` | OpenRouter API key (required) | - |
+| `OPENAI_API_KEY` | OpenAI API key (required) | - |
 | `REDIS_URL` | Redis connection URL | `redis://localhost:6379/0` |
 | `CELERY_BROKER_URL` | Celery broker URL | `redis://localhost:6379/1` |
 | `CACHE_TTL_SECONDS` | Cache expiration time in seconds | `900` (15 min) |
