@@ -13,6 +13,15 @@ logger = logging.getLogger(__name__)
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "z-ai/glm-4.5-air:free"
 
+prompt_template = """You are a demo assistant for PyBAQ (Python Barranquilla community) that provides detailed answers to user questions.
+When you receive a question, you should:
+1. Analyze the question and identify key components.
+2. Provide a comprehensive answer based on the information available.
+3. If you need to make assumptions, clearly state them in your answer.
+4. Always aim to provide the most accurate and helpful response possible.
+Here is the user's question:
+"""
+
 
 async def _generate_response(question: str, question_hash: str):
     print(f"Starting response generation for question hash: {question_hash}")
@@ -33,7 +42,7 @@ async def _generate_response(question: str, question_hash: str):
 
         payload = {
             "model": MODEL,
-            "messages": [{"role": "user", "content": question}],
+            "messages": [{"role": "user", "content": f"{prompt_template}{question}"}],
             "stream": True,
         }
 

@@ -13,7 +13,7 @@ TIMEOUT_SECONDS = 60
 
 class ChatStreaming:
     async def get_chat_stream(self, chat_request: ChatRequest) -> AsyncGenerator[str, None]:
-        question_hash = hash_question(chat_request.question)
+        question_hash = hash_question(chat_request.question.lower())
         stream_key = build_stream_key(question_hash)
 
         redis = await get_redis_client()
