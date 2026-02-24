@@ -1,8 +1,7 @@
 import asyncio
-import json
 import logging
 
-import requests
+from openai import OpenAI
 
 from app.celery_app import celery_app
 from app.config import settings
@@ -10,7 +9,6 @@ from app.infra.cache.redis_client import build_stream_key, get_redis_client, wri
 
 logger = logging.getLogger(__name__)
 
-OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "z-ai/glm-4.5-air:free"
 
 prompt_template = """You are a demo assistant for PyBAQ (Python Barranquilla community) that provides detailed answers to user questions.
@@ -35,48 +33,22 @@ async def _generate_response(question: str, question_hash: str):
     try:
         full_content = []
 
-        headers = {
-            "Authorization": f"Bearer {settings.openrouter_api_key}",
-            "Content-Type": "application/json",
-        }
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=settings.openrouter_api_key,
+        )
 
-        payload = {
-            "model": MODEL,
-            "messages": [{"role": "user", "content": f"{prompt_template}{question}"}],
-            "stream": True,
-        }
+        stream = client.chat.completions.create(
+            model=MODEL,
+            messages=[{"role": "user", "content": f"{prompt_template}{question}"}],
+            stream=True,
+        )
 
-        buffer = ""
-        with requests.post(OPENROUTER_URL, headers=headers, json=payload, stream=True) as response:
-            response.raise_for_status()
-            
-            for chunk in response.iter_content(chunk_size=1024, decode_unicode=True):
-                buffer += chunk
-                while True:
-                    try:
-                        # Find the next complete SSE line
-                        line_end = buffer.find('\n')
-                        if line_end == -1:
-                            break
-
-                        line = buffer[:line_end].strip()
-                        buffer = buffer[line_end + 1:]
-
-                        if line.startswith('data: '):
-                            data = line[6:]
-                            if data == '[DONE]':
-                                break
-
-                            try:
-                                data_obj = json.loads(data)
-                                content = data_obj["choices"][0]["delta"].get("content")
-                                if content:
-                                    full_content.append(content)
-                                    await write_to_stream(redis, stream_key, {"status": "streaming", "chunk": content})
-                            except json.JSONDecodeError:
-                                pass
-                    except Exception:
-                        break
+        for chunk in stream:
+            content = chunk.choices[0].delta.content
+            if content:
+                full_content.append(content)
+                await write_to_stream(redis, stream_key, {"status": "streaming", "chunk": content})
 
         await write_to_stream(redis, stream_key, {"status": "completed", "chunk": "".join(full_content)})
         await redis.expire(stream_key, settings.cache_ttl_seconds)
