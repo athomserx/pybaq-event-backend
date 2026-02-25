@@ -25,10 +25,10 @@ A FastAPI application that streams AI responses using Redis for caching and Cele
                     │               ┌────────────────┐      │
                     │               │ Celery Worker  │      │
                     │               │                │      │
-                     │               │ ┌────────────┐ │      │
-                     │               │ │  OpenAI    │ │      │
-                     │               │ │   SDK      │ │      │
-                     │               │ └─────┬──────┘ │      │
+                    │               │ ┌────────────┐ │      │
+                    │               │ │  OpenAI    │ │      │
+                    │               │ │   SDK      │ │      │
+                    │               │ └─────┬──────┘ │      │
                     │               └───────┼────────┘      │
                     │                       │               │
                     │                       ▼               │
